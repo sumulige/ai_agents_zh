@@ -1,24 +1,354 @@
 # Episode 40: Flux.2[dev] with n8n
 
-Flux.2[dev] was just released - and boy, is it powerful! In this episode, we explore how to integrate Flux.2[dev] into n8n workflows using Cloudflare Workers AI and Fal.ai.
+> AI Agents A-Z - 用 n8n 构建实用的 AI Agent
+> 难度: ⭐⭐ | 预估时间: 30 分钟
 
-## [📚 Join our Skool community for support, premium content and more!](https://www.skool.com/ai-agents-az/about)
+---
 
-### Get the premium versions of the workflows and the exclusive content - with the hosted GPU media server
+## [Level 1] 这一集在做什么？
 
-## Free n8n JSON workflow
+本集教你用 n8n 集成 **Flux.2[dev]** - Black Forest Labs 最新发布的强大 AI 图像生成模型。
 
-- [n8n workflow: test flux.2[dev]](workflow_test_flux2.json)
-- [n8n subworkflow: flux.2[dev] on cludflare](subworkflow_cloudflare.json)
-- [n8n subworkflow: flux.2[dev] on fal.ai](subworkflow_fal.json)
+**一句话**：像"图像魔法师"一样，用文字生成图像，或用图像+提示词转换图像。
 
-## Additional resources
+**适用场景**：
+- 文字生成图像（Text to Image）- 使用 Cloudflare Workers AI
+- 图像转换（Image to Image）- 使用 Fal.ai
+- 创意设计和原型制作
 
-- [Join n8n](https://n8n.partnerlinks.io/fenoo5ekqs1g)
-- [Cloudflare](https://dash.cloudflare.com)
-- [Fal.ai API keys](https://fal.ai/dashboard/keys)
-- [Cloudflare pricing for Workers AI](https://developers.cloudflare.com/workers-ai/platform/pricing/)
+> 💡 **快速判断**：如果你想体验**最新最强的 Flux.2[dev]**，这一集适合你。
+> 想了解更多？继续阅读 [Level 2]。
 
-## Watch the video
+---
 
-[![Flux.2 is out - here's how to use it in n8n (free workflow)](https://img.youtube.com/vi/Wlc7j26EiJc/0.jpg)](https://www.youtube.com/watch?v=Wlc7j26EiJc)
+## [Level 2] 核心概念
+
+### 你会学到什么
+
+| 序号 | 概念 | 说明 |
+|------|------|------|
+| 1 | **Flux.2[dev]** | Black Forest Labs 最新的开源图像生成模型 |
+| 2 | **Cloudflare Workers AI** | 文字生成图像，有免费额度 |
+| 3 | **Fal.ai 子工作流** | 图像到图像转换 |
+| 4 | **n8n Switch 节点** | 条件分支，选择不同的服务 |
+
+### 涉及的 n8n 节点
+
+| 节点类型 | 用途 | 新手友好度 |
+|----------|------|------------|
+| Form Trigger | 收集用户选择 | ⭐ 简单 |
+| Switch | 条件分支 | ⭐⭐ 中等 |
+| HTTP Request | 调用 API | ⭐⭐ 中等 |
+| Convert to File | 处理图像数据 | ⭐ 简单 |
+
+### 涉及的外部服务
+
+| 服务 | 免费额度 | 难度 | 官网 |
+|------|----------|------|------|
+| **Cloudflare Workers AI** | 每月 10,000 次请求 | ⭐⭐ | [cloudflare.com](https://dash.cloudflare.com) |
+| **Fal.ai** | 按使用付费 | ⭐⭐ | [fal.ai](https://fal.ai/) |
+| **Flux.2[dev]** | 通过以上服务访问 | ⭐ | [blackforestlabs.ai](https://blackforestlabs.ai/) |
+
+> 💡 **了解够了？** 知道学什么就可以开始。继续阅读 [Level 3] 了解工作流结构。
+
+---
+
+## [Level 3] 工作流结构
+
+### 工作流概览图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                "Flux.2[dev] 测试" 工作流                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [Form Trigger] ──► [Switch]                               │
+│  用户选择模型       条件分支                                │
+│       │                  │                                  │
+│       │         ┌────────┴────────┐                         │
+│       │         │                 │                         │
+│       │         ▼                 ▼                         │
+│       │   [Cloudflare]    [Fal.ai]                         │
+│       │   Text→Image       Image→Image                      │
+│       │         │                 │                         │
+│       │         └────────┬────────┘                         │
+│       │                  │                                  │
+│       ▼                  ▼                                  │
+│   [返回生成的图像文件]                                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 子工作流说明
+
+**Cloudflare 子工作流** (Text to Image):
+```
+[Form] → [HTTP Request to Workers AI] → [Convert to File]
+```
+
+**Fal.ai 子工作流** (Image to Image):
+```
+[Form] → [Upload Image] → [Call Fal.ai API] → [Convert to File]
+```
+
+### 数据流
+
+```
+用户选择 Cloudflare:
+  输入提示词 → Workers AI → Flux.2生成 → 返回图像
+
+用户选择 Fal.ai:
+  上传图像 + 提示词 → Fal.ai → Flux.2转换 → 返回图像
+```
+
+### 节点说明
+
+| 节点 | 类型 | 配置要点 | 数据输出 |
+|------|------|----------|----------|
+| **On form submission** | Form Trigger | 单选：Cloudflare 或 Fal.ai | 用户选择 |
+| **Switch** | Switch | 根据选择分支 | 路由到对应子工作流 |
+| **Cloudflare sub-workflow** | HTTP Request | 调用 Workers AI API | 图像数据 |
+| **Fal.ai sub-workflow** | HTTP Request | 上传图像+提示词 | 图像数据 |
+| **Convert to File** | Convert to File | 转换为可下载文件 | PNG/WEBP |
+
+> 💡 **准备就绪？** 理解工作流结构后，继续阅读 [Level 4] 开始构建。
+
+---
+
+## [Level 4] 构建步骤
+
+### 前置准备
+
+在开始之前，请确保：
+
+- [ ] n8n 已安装并运行（访问 http://localhost:5678）
+- [ ] Cloudflare 账号已创建，并启用 Workers AI
+- [ ] Fal.ai 账号已创建（[fal.ai](https://fal.ai/dashboard/keys)）
+- [ ] 已获取各自的 API Key
+
+### 步骤 1: 导入主工作流
+
+**目标**: 导入 Flux.2[dev] 测试工作流
+
+**操作**:
+
+1. 在 n8n 中点击右上角 **"..."** 菜单
+2. 选择 **"Import from File"**
+3. 选择 `workflow_test_flux2.json`
+
+**验证**: 工作流应该显示在画布上，包含表单触发器和 Switch 节点
+
+---
+
+### 步骤 2: 配置 Cloudflare Workers AI
+
+**目标**: 设置文字生成图像功能
+
+**操作**:
+
+1. 点击 **"Flux.2[dev] on Cloudflare"** 子工作流
+2. 找到 HTTP Request 节点
+3. 配置 Cloudflare API:
+   - **Method**: POST
+   - **URL**: `https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/@cf/black-forest-labs/flux-2-dev`
+   - **Headers**: 添加 `Authorization: Bearer {API_TOKEN}`
+4. 配置请求 Body:
+```json
+{
+  "prompt": "{{ $json.prompt }}",
+  "image_size": "square"
+}
+```
+
+**验证**: 确保 API Token 和 Account ID 正确
+
+---
+
+### 步骤 3: 配置 Fal.ai 子工作流
+
+**目标**: 设置图像到图像转换功能
+
+**操作**:
+
+1. 点击 **"Flux.2[dev] on Fal.ai"** 子工作流
+2. 找到 Fal.ai HTTP Request 节点
+3. 配置 Fal.ai API:
+   - **Method**: POST
+   - **URL**: `https://fal.ai/fal-ai/flux-pro/v1.1-ultra`
+   - **Headers**: 添加 `Authorization: Key {FAL_API_KEY}`
+4. 配置请求 Body:
+```json
+{
+  "image_url": "{{ $json.image_url }}",
+  "prompt": "{{ $json.prompt }}"
+}
+```
+
+**验证**: 确保 Fal.ai API Key 已配置
+
+---
+
+### 步骤 4: 激活并测试工作流
+
+**目标**: 端到端验证两种方式
+
+**操作**:
+
+**测试 Cloudflare (Text to Image)**:
+1. 激活工作流
+2. 打开表单 URL
+3. 选择 "Flux.2[dev] on Cloudflare"
+4. 输入提示词：`"a sunset over mountains"`
+5. 提交表单
+6. 等待生成结果
+
+**测试 Fal.ai (Image to Image)**:
+1. 重新打开表单
+2. 选择 "Flux.2[dev] on Fal.ai"
+3. 上传一张图片
+4. 输入提示词：`"make this look like a watercolor painting"`
+5. 选择纵横比
+6. 提交表单
+7. 等待转换结果
+
+**预期结果**: 两种方式都成功返回生成的图像
+
+> 💡 **需要帮助？** 如果遇到问题，查看 [Level 5] 故障排除。
+
+---
+
+## [Level 5] 进阶内容
+
+### 支持的纵横比
+
+| 选项 | 尺寸 | 适用场景 |
+|------|------|----------|
+| `square_hd` | 1024x1024 | 正方形高清 |
+| `square` | 1024x1024 | 正方形标准 |
+| `portrait_4_3` | 832x1104 | 竖屏照片 |
+| `portrait_16_9` | 832x1216 | 竖屏视频 |
+| `landscape_4_3` | 1104x832 | 横屏照片 |
+| `landscape_16_9` | 1216x832 | 横屏视频 |
+
+### Flux.2[dev] vs Flux.1
+
+| 特性 | Flux.2[dev] | Flux.1 |
+|------|-------------|-------|
+| **质量** | 更高 | 高 |
+| **速度** | 更快 | 快 |
+| **提示词理解** | 更好 | 好 |
+| **可用性** | 通过 API | 广泛可用 |
+
+### Cloudflare 定价
+
+| 套餐 | 价格 | 请求数 |
+|------|------|--------|
+| **免费** | $0 | 10,000 次/月 |
+| **Paid** | 按使用 | $0.003/1000 张图片 |
+
+### 高级提示词技巧
+
+```json
+// 基础提示词
+"a cat"
+
+// 增加风格
+"a cat, oil painting style, vibrant colors"
+
+// 添加细节
+"a cat sitting on a windowsill, golden hour lighting, detailed fur"
+
+// 指定质量
+"a cat, professional photography, 8k, highly detailed"
+```
+
+### 故障排除
+
+| 问题 | 症状 | 可能原因 | 解决方案 |
+|------|------|----------|----------|
+| Cloudflare 认证失败 | 401 错误 | API Token 错误 | 检查 Token 格式和权限 |
+| Fal.ai 超时 | 请求超时 | 图像太大或服务器忙 | 减小图像尺寸，重试 |
+| Switch 不工作 | 两路都不输出 | 条件表达式错误 | 检查 Switch 节点条件 |
+| 图像质量差 | 输出模糊 | 提示词不够详细 | 增加描述词和风格指定 |
+
+### 生产部署注意事项
+
+**成本优化**:
+- Cloudflare 免费额度充足用于测试
+- Fal.ai 按使用付费，设置预算限制
+- 缓存常用结果减少重复调用
+
+**性能优化**:
+- 使用异步处理避免超时
+- 设置合理的超时时间
+- 考虑使用队列处理大量请求
+
+**安全建议**:
+- 使用环境变量存储 API Keys
+- 限制工作流的公开访问
+- 定期轮换 API 凭证
+
+### 相关资源
+
+**相关 Episode**:
+- [Episode 41](../episode_41/) - Z-Image-Turbo 免费方案
+- [Episode 24](../episode_24/) - Modal 图像生成
+- [Episode 19](../episode_19/) - Flux.1 Kontext
+
+**外部资源**:
+- [Cloudflare Workers AI 文档](https://developers.cloudflare.com/workers-ai)
+- [Fal.ai 文档](https://docs.fal.ai/)
+- [Flux.2 公告](https://blackforestlabs.ai/2024/12/17/flux-dev.html)
+
+---
+
+## 资源下载
+
+### n8n 工作流文件
+
+下载并导入到 n8n：
+
+- [workflow_test_flux2.json](./workflow_test_flux2.json) - 主工作流
+- [subworkflow_cloudflare.json](./subworkflow_cloudflare.json) - Cloudflare 子工作流
+- [subworkflow_fal.json](./subworkflow_fal.json) - Fal.ai 子工作流
+
+**导入方法**:
+1. 在 n8n 中点击右上角 "..." 菜单
+2. 选择 "Import from File"
+3. 选择下载的 JSON 文件
+
+---
+
+## 观看视频
+
+[![Flux.2 is out - here's how to use it in n8n (free workflow)
+](https://img.youtube.com/vi/Wlc7j26EiJc/0.jpg)](https://www.youtube.com/watch?v=Wlc7j26EiJc)
+
+**时长**: ~12 分钟 | **更新日期**: 2025-01-16
+
+---
+
+## 社区支持
+
+遇到问题？加入社区获取帮助：
+
+- [Skool 社区](https://www.skool.com/ai-agents-az/about)
+- 获取 Premium 版本工作流
+
+---
+
+## 导航
+
+| 你的需求 | 建议阅读 |
+|----------|----------|
+| 快速了解本集内容 | Level 1 |
+| 决定是否学习本集 | Level 1-2 |
+| 理解工作流原理 | Level 3 |
+| 跟随教程构建 | Level 4 |
+| 排查问题/生产部署 | Level 5 |
+
+---
+
+**Episode**: 40 | **版本**: v2.0 (分层解释版) | **最后更新**: 2025-01-16
+
+**标签**: n8n, Flux.2, Cloudflare, Fal.ai, image generation, AI art

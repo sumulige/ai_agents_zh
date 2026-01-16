@@ -1,25 +1,376 @@
 # Episode 39: Create infographics with Nano Banana Pro in n8n
 
-In this episode, we explore how to leverage Nano Banana Pro to create stunning infographics effortlessly.
+> AI Agents A-Z - 用 n8n 构建实用的 AI Agent
+> 难度: ⭐⭐ | 预估时间: 30 分钟
 
-## [📚 Join our Skool community for support, premium content and more!](https://www.skool.com/ai-agents-az/about)
+---
 
-### Get the premium versions of the workflows and the exclusive content - with the hosted GPU media server
+## [Level 1] 这一集在做什么？
 
-## Free n8n JSON workflow
+本集教你用 n8n 集成 **Google Nano Banana Pro** 创建病毒式传播的信息图（infographics）内容。
 
-- [n8n workflow: Create infographics with Nano Banana Pro](infographics_with_nanobanana_pro.json)
+**一句话**：像"信息图设计师"一样，输入数据或主题，自动生成视觉吸引力强的信息图。
 
-### Necessary OAuth2 scopes for Gemini
+**适用场景**：
+- 社交媒体信息图创作
+- 数据可视化自动化
+- 教育内容制作
+- 病毒式传播内容生成
 
-`https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/generative-language.retriever https://www.googleapis.com/auth/generative-language.tuning`
+> 💡 **快速判断**：如果你需要**快速创建专业信息图**，这一集适合你。
+> 想了解更多？继续阅读 [Level 2]。
 
-## Additional resources
+---
 
-- [Join n8n](https://n8n.partnerlinks.io/fenoo5ekqs1g)
+## [Level 2] 核心概念
+
+### 你会学到什么
+
+| 序号 | 概念 | 说明 |
+|------|------|------|
+| 1 | **Nano Banana Pro** | Google 高级图像生成模型 |
+| 2 | **信息图设计** | 数据可视化的最佳实践 |
+| 3 | **Gemini 3 集成** | 使用 LLM 优化信息图内容 |
+| 4 | **Google Programmable Search** | 增强信息图的数据源 |
+| 5 | **自动化设计** | 批量生成信息图工作流 |
+
+### 涉及的 n8n 节点
+
+| 节点类型 | 用途 | 新手友好度 |
+|----------|------|------------|
+| Form Trigger | 收集主题/数据 | ⭐ 简单 |
+| HTTP Request | 调用 Gemini API | ⭐⭐ 中等 |
+| Code | 处理布局数据 | ⭐⭐ 中等 |
+| Loop Over Items | 批量处理 | ⭐⭐ 中等 |
+| Merge | 合成最终图像 | ⭐⭐ 中等 |
+
+### 涉及的外部服务
+
+| 服务 | 免费额度/价格 | 难度 | 官网 |
+|------|--------------|------|------|
+| **Google Cloud Vertex AI** | 有免费额度 | ⭐⭐ | [cloud.google.com](https://console.cloud.google.com/) |
+| **Nano Banana Pro** | 通过 Vertex AI 访问 | ⭐⭐ | - |
+| **Programmable Search** | 有免费额度 | ⭐⭐ | [programmablesearchengine.google.com](https://programmablesearchengine.google.com/) |
+
+> 💡 **了解够了？** 知道学什么就可以开始。继续阅读 [Level 3] 了解工作流结构。
+
+---
+
+## [Level 3] 工作流结构
+
+### 工作流概览图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              "Infographic Creator" 工作流                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [Form Trigger] ──► [Generate Content] ──► [Design Layout]     │
+│  主题/数据            Gemini 3 内容       设计布局结构           │
+│       │                  │                    │                │
+│       │                  │                    ▼                │
+│       │                  │            [Create Elements]         │
+│       │                  │            生成视觉元素               │
+│       │                  │                    │                │
+│       │                  │                    ▼                │
+│       │                  │            [Generate Graphics]       │
+│       │                  │            Nano Banana 图像          │
+│       │                  │                    │                │
+│       │                  └────────────────────┘                │
+│       │                                                │        │
+│       ▼                                                ▼        │
+│  [Compose Infographic] ──► [Return Result]                    │
+│  合成最终图像        返回信息图                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 数据流
+
+```
+用户输入 (主题、数据点、风格偏好)
+    │
+    ├──► Gemini 3 生成内容结构
+    │     └─── 标题、要点、数据可视化建议
+    │
+    ├──► 设计布局结构
+    │     └─── 网格、排列、视觉层次
+    │
+    ├──► Nano Banana Pro 生成视觉元素
+    │     └─── 图标、插图、图表
+    │
+    └──► 合成最终信息图
+```
+
+### 节点说明
+
+| 节点 | 类型 | 配置要点 | 数据输出 |
+|------|------|----------|----------|
+| **On form submission** | Form Trigger | 主题、数据、风格 | 表单数据 |
+| **Generate content** | HTTP Request | Gemini 3 Pro | 内容结构 |
+| **Design layout** | Code | 计算布局参数 | 布局数据 |
+| **Create elements** | Loop Over Items | 生成各元素 | 元素数组 |
+| **Generate graphics** | HTTP Request | Nano Banana Pro | 图像元素 |
+| **Compose final** | Code/Merge | 合成所有部分 | 最终信息图 |
+
+> 💡 **准备就绪？** 理解工作流结构后，继续阅读 [Level 4] 开始构建。
+
+---
+
+## [Level 4] 构建步骤
+
+### 前置准备
+
+在开始之前，请确保：
+
+- [ ] n8n 已安装并运行（访问 http://localhost:5678）
+- [ ] Google Cloud 账号已创建
+- [ ] Vertex AI API 已启用
+- [ ] Programmable Search 已配置（可选）
+
+### 步骤 1: 设置 Google Cloud 项目
+
+**目标**: 配置 Vertex AI 访问
+
+**操作**:
+
+1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
+2. 创建新项目或选择现有项目
+3. 启用以下 API:
+   - Vertex AI API
+   - Gemini API
+4. 创建服务账号并下载密钥文件
+
+**验证**: API 已启用，凭证已下载
+
+---
+
+### 步骤 2: 配置 Programmable Search（可选）
+
+**目标**: 增强数据获取能力
+
+**操作**:
+
+1. 访问 [Programmable Search Engine](https://programmablesearchengine.google.com/)
+2. 创建搜索引擎
+3. 获取 Search Engine ID 和 API Key
+4. 配置要搜索的网站
+
+**验证**: 搜索引擎可以正常工作
+
+---
+
+### 步骤 3: 导入工作流
+
+**目标**: 将工作流导入 n8n
+
+**操作**:
+
+1. 在 n8n 中点击右上角 **"..."** 菜单
+2. 选择 **"Import from File"**
+3. 选择 `infographics_with_nanobanana_pro.json`
+
+**验证**: 工作流应该显示在画布上
+
+---
+
+### 步骤 4: 配置 API 凭证
+
+**目标**: 连接 Google 服务
+
+**操作**:
+
+1. 点击 Gemini 相关节点
+2. 配置 OAuth2 凭证或 Service Account
+3. 输入 Project ID 和 Location
+
+**必需作用域**:
+```
+https://www.googleapis.com/auth/cloud-platform
+https://www.googleapis.com/auth/generative-language.retriever
+https://www.googleapis.com/auth/generative-language.tuning
+```
+
+**验证**: 凭证已正确配置
+
+---
+
+### 步骤 5: 测试完整工作流
+
+**目标**: 端到端验证
+
+**操作**:
+
+1. 激活工作流
+2. 填写表单：
+   - Topic: "5 Benefits of Meditation"
+   - Data Points: "Reduces stress, Improves focus, Better sleep, Lower anxiety, Emotional health"
+   - Style: "Modern, clean, minimalist"
+3. 提交表单
+4. 等待处理（约 1-2 分钟）
+
+**预期结果**: 工作流返回生成的信息图图像
+
+> 💡 **需要帮助？** 如果遇到问题，查看 [Level 5] 故障排除。
+
+---
+
+## [Level 5] 进阶内容
+
+### 信息图风格模板
+
+| 风格 | 特点 | 适用场景 |
+|------|------|----------|
+| **Minimalist** | 简洁、大量留白 | 专业报告 |
+| **Vibrant** | 鲜艳色彩、动态 | 社交媒体 |
+| **Corporate** | 蓝色调、正式 | 商业演示 |
+| **Playful** | 插画风格、趣味 | 教育内容 |
+| **Data-heavy** | 图表为主、精确 | 数据报告 |
+
+### 布局结构选项
+
+| 布局 | 描述 |
+|------|------|
+| **单列** | 垂直流向，适合移动端 |
+| **双列** | 图文并排，桌面友好 |
+| **网格** | 多卡片布局，内容丰富 |
+| **时间轴** | 线性叙事，历史内容 |
+| **对比** | 左右对照，比较分析 |
+
+### Nano Banana Pro 提示词技巧
+
+**图标生成**:
+```
+Simple flat icon of [concept],
+minimalist style,
+vector art,
+transparent background,
+[primary color]
+```
+
+**图表生成**:
+```
+Professional [chart type] infographic,
+clean design,
+data visualization,
+labeled axes,
+title: "[chart title]",
+color scheme: [colors]
+```
+
+### 批量信息图生产
+
+创建自动化工作流：
+
+```
+[Topics List] ──► [Loop] ──► [Generate Infographic]
+                                     │
+                                     ▼
+                             [Save to Drive]
+                                     │
+                                     ▼
+                             [Schedule Social Post]
+```
+
+### 故障排除
+
+| 问题 | 症状 | 可能原因 | 解决方案 |
+|------|------|----------|----------|
+| OAuth2 错误 | 401/403 错误 | 作用域不足 | 检查 OAuth2 作用域配置 |
+| 图像质量差 | 输出模糊 | 提示词不够详细 | 添加风格和质量描述 |
+| 布局混乱 | 元素重叠 | 布局计算错误 | 调整网格参数 |
+| 配色不协调 | 颜色冲突 | 未指定颜色方案 | 使用预定义配色 |
+| 文字不清 | 难以阅读 | 字体太小或对比度低 | 增大字号，提高对比 |
+
+### 生产部署注意事项
+
+**成本优化**:
+- 利用 Google Cloud 免费额度
+- 批量生成时使用队列
+- 缓存常用元素
+
+**内容优化**:
+- 保持信息简洁
+- 使用视觉层次
+- 确保可读性
+- 添加品牌元素
+
+**性能优化**:
+- 预生成常用模板
+- 使用组件库
+- 优化图像分辨率
+
+**平台适配**:
+- Instagram: 1:1 或 4:5
+- Pinterest: 2:3
+- Twitter: 16:9
+- LinkedIn: 1200x627
+
+### 相关资源
+
+**相关 Episode**:
+- [Episode 40](../episode_40/) - Flux.2 图像生成
+- [Episode 41](../episode_41/) - Z-Image-Turbo 免费方案
+- [Episode 42](../episode_42/) - 免费说明视频
+
+**外部资源**:
 - [Google Cloud Console](https://console.cloud.google.com/)
-- [Google Programmable API](https://programmablesearchengine.google.com/)
+- [Vertex AI 文档](https://cloud.google.com/vertex-ai)
+- [Programmable Search](https://programmablesearchengine.google.com/)
+- [加入 n8n](https://n8n.partnerlinks.io/fenoo5ekqs1g)
 
-## Watch the video
+---
+
+## 资源下载
+
+### n8n 工作流文件
+
+下载并导入到 n8n：
+
+- [infographics_with_nanobanana_pro.json](./infographics_with_nanobanana_pro.json)
+
+**导入方法**:
+1. 在 n8n 中点击右上角 "..." 菜单
+2. 选择 "Import from File"
+3. 选择下载的 JSON 文件
+
+### 附加资源
+
+- [Google Cloud Console](https://console.cloud.google.com/)
+- [Google Programmable Search](https://programmablesearchengine.google.com/)
+- [加入 n8n](https://n8n.partnerlinks.io/fenoo5ekqs1g)
+
+---
+
+## 观看视频
 
 [![viral infographics with nano banana pro and n8n](https://img.youtube.com/vi/bj67GH4wdxQ/0.jpg)](https://www.youtube.com/watch?v=bj67GH4wdxQ)
+
+**时长**: ~15 分钟 | **更新日期**: 2025-01-16
+
+---
+
+## 社区支持
+
+遇到问题？加入社区获取帮助：
+
+- [Skool 社区](https://www.skool.com/ai-agents-az/about)
+- 获取 Premium 版本工作流
+
+---
+
+## 导航
+
+| 你的需求 | 建议阅读 |
+|----------|----------|
+| 快速了解本集内容 | Level 1 |
+| 决定是否学习本集 | Level 1-2 |
+| 理解工作流原理 | Level 3 |
+| 跟随教程构建 | Level 4 |
+| 排查问题/生产部署 | Level 5 |
+
+---
+
+**Episode**: 39 | **版本**: v2.0 (分层解释版) | **最后更新**: 2025-01-16
+
+**标签**: n8n, Nano Banana Pro, infographics, Gemini 3, Vertex AI, data visualization, Google Cloud

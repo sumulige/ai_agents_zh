@@ -1,40 +1,420 @@
-# Episode 35: Instagram influencer machine
+# Episode 35: Instagram Influencer Machine
 
-Create your own AI influencers with this free n8n workflow. It uses fal.ai's Veo 3.1 and nanobanana models to generate images and captions, then posts them to Instagram.
+> AI Agents A-Z - 用 n8n 构建实用的 AI Agent
+> 难度: ⭐⭐⭐ | 预估时间: 60 分钟
 
-## [📚 Join our Skool community for support, premium content and more!](https://www.skool.com/ai-agents-az/about?gw11)
+---
 
-### Get the premium versions of the workflows and the exclusive content - with the hosted GPU media server
+## [Level 1] 这一集在做什么？
 
-## Free n8n JSON workflow
+本集教你用 n8n 创建**全自动 AI 网红机器** - 自动生成内容并发布到 Instagram。
 
-- [n8n workflow: influencer machine](workflow-influencer-machine.json)
-- [n8n subWorkflow: fal.ai Veo 3.1](subworkflow-fal-veo31.json)
-- [n8n subWorkflow: fal.ai nanobanana](subworkflow-fal-nanobanana.json)
+**一句话**：像"网红工厂"一样，自动生成 AI 形象、写文案、发帖，24/7 无休运营。
 
-## Instructions
+**适用场景**：
+- Instagram 虚拟网红运营
+- 联盟营销自动化
+- 社交媒体内容测试
 
-### Create these datatables in your n8n database
+> 💡 **快速判断**：如果你想做**Instagram 自动化运营**，这一集适合你。
+> 想了解更多？继续阅读 [Level 2]。
 
-- influencer
-  - name (string)
-  - bio (string)
-  - image (string)
-  - instagram_business_id (string)
-- influencer_weekly_plans
-  - influencer_id (string)
-  - week (string)
-  - plan (string)
-- influencer_posts
-  - influencer_id (string)
-  - post_summary (string)
+---
 
-## Additional resources
+## [Level 2] 核心概念
 
-- [Guide to connect your Instagram Business account to n8n](guide-instagram.md)
-- [Join n8n](https://n8n.partnerlinks.io/fenoo5ekqs1g)
-- [Fal.ai API keys](https://fal.ai/dashboard/keys)
+### 你会学到什么
 
-## Watch the video
+| 序号 | 概念 | 说明 |
+|------|------|------|
+| 1 | **AI 虚拟网红** | 使用 AI 生成人物形象和内容 |
+| 2 | **Fal.ai Veo 3.1** | 图像生成模型 |
+| 3 | **NanoBanana** | 图像编辑和处理 |
+| 4 | **Instagram Graph API** | 自动发布到 Instagram |
+| 5 | **n8n Database** | 存储网红数据和发布计划 |
 
-[![Make your own AI influencers with this free n8n workflow](https://img.youtube.com/vi/PjXYr6M4fjY/0.jpg)](https://www.youtube.com/watch?v=PjXYr6M4fjY)
+### 涉及的 n8n 节点
+
+| 节点类型 | 用途 | 新手友好度 |
+|----------|------|------------|
+| Cron | 定时触发 | ⭐ 简单 |
+| HTTP Request | 调用 Fal.ai API | ⭐⭐ 中等 |
+| Sub-workflow | 模块化功能 | ⭐⭐⭐ 复杂 |
+| Instagram | 发布内容 | ⭐⭐ 中等 |
+| Database | 数据存储 | ⭐⭐ 中等 |
+
+### 涉及的外部服务
+
+| 服务 | 说明 |
+|------|------|
+| **Fal.ai** | Veo 3.1 图像生成 |
+| **NanoBanana** | 图像处理和编辑 |
+| **Instagram Graph API** | 自动发布内容 |
+
+> 💡 **了解够了？** 知道学什么就可以开始。继续阅读 [Level 3] 了解工作流结构。
+
+---
+
+## [Level 3] 工作流结构
+
+### 工作流概览图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              "Instagram Influencer Machine" 工作流            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [Cron Trigger] ──► [Query Database]                      │
+│  定时触发         获取待发布计划                              │
+│       │                  │                                  │
+│       │                  ▼                                  │
+│       │            [Get Influencer Data]                   │
+│       │            获取网红配置                              │
+│       │                  │                                  │
+│       │                  ▼                                  │
+│       │         [Generate Image] ──► [Edit Image]          │
+│       │         Fal.ai Veo 3.1      NanoBanana              │
+│       │                  │             │                      │
+│       │                  └──────┬──────┘                      │
+│       │                         │                             │
+│       │                         ▼                             │
+│       │                  [Generate Caption]                  │
+│       │                         │                             │
+│       │                         ▼                             │
+│       │                  [Post to Instagram]                │
+│       │                         │                             │
+│       │                         ▼                             │
+│       │                  [Update Database]                  │
+│       │                  标记已发布                          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 数据库结构
+
+**influencer 表** (网红配置):
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| name | string | 网红名称 |
+| bio | string | 个人简介 |
+| image | string | 头像 URL |
+| instagram_business_id | string | Instagram 商业账号 ID |
+
+**influencer_weekly_plans 表** (发布计划):
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| influencer_id | string | 关联网红 |
+| week | string | 周期 |
+| plan | string | 内容计划 |
+
+**influencer_posts 表** (发布记录):
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| influencer_id | string | 关联网红 |
+| post_summary | string | 帖子摘要 |
+
+### 子工作流说明
+
+**Fal.ai Veo 3.1 子工作流**:
+```
+[输入提示词] → [调用 Fal.ai API] → [返回生成图像]
+```
+
+**NanoBanana 子工作流**:
+```
+[输入图像] → [处理/编辑] → [返回处理后图像]
+```
+
+### 数据流
+
+```
+定时触发
+    │
+    ├──► 查询数据库获取本周计划
+    │
+    ├──► 获取网红配置 (形象、风格等)
+    │
+    ├──► 生成图像 (Fal.ai Veo 3.1)
+    │
+    ├──► 编辑图像 (NanoBanana)
+    │
+    ├──► 生成文案 (LLM)
+    │
+    ├──► 发布到 Instagram
+    │
+    └──► 更新数据库记录
+```
+
+> 💡 **准备就绪？** 理解工作流结构后，继续阅读 [Level 4] 开始构建。
+
+---
+
+## [Level 4] 构建步骤
+
+### 前置准备
+
+在开始之前，请确保：
+
+- [ ] n8n 已安装并运行
+- [ ] Instagram Business 账号已创建
+- [ ] Fal.ai API Key 已获取
+- [ ] Instagram Graph API 已配置
+- [ ] n8n Database 功能已启用
+
+### 步骤 1: 创建 Instagram Business 账号
+
+**目标**: 设置可编程的 Instagram 账号
+
+**操作**:
+
+1. 将 Instagram 账号转换为 Business 账号
+2. 在 Facebook Business Manager 中创建应用
+3. 获取 Instagram Business ID
+4. 配置 Graph API 权限
+
+**验证**: 能够通过 API 访问 Instagram
+
+---
+
+### 步骤 2: 配置 n8n Database
+
+**目标**: 创建数据表
+
+**操作**:
+
+1. 在 n8n 中创建 Database
+2. 创建 `influencer` 表：
+   - `name` (Text)
+   - `bio` (Text)
+   - `image` (Text)
+   - `instagram_business_id` (Text)
+3. 创建 `influencer_weekly_plans` 表
+4. 创建 `influencer_posts` 表
+
+**验证**: 数据表创建成功，可以插入测试数据
+
+---
+
+### 步骤 3: 导入工作流
+
+**目标**: 导入主工作流和子工作流
+
+**操作**:
+
+1. 导入主工作流：`workflow-influencer-machine.json`
+2. 导入子工作流：`subworkflow-fal-veo31.json`
+3. 导入子工作流：`subworkflow-fal-nanobanana.json`
+
+**验证**: 所有工作流在画布上正确显示
+
+---
+
+### 步骤 4: 配置 Instagram 节点
+
+**目标**: 连接 Instagram Business 账号
+
+**操作**:
+
+1. 参考 [guide-instagram.md](./guide-instagram.md)
+2. 在 n8n 中配置 Instagram 凭证
+3. 测试连接
+
+**验证**: 成功获取 Instagram 账号信息
+
+---
+
+### 步骤 5: 配置 Fal.ai API
+
+**目标**: 设置图像生成
+
+**操作**:
+
+1. 获取 Fal.ai API Key: [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys)
+2. 在 HTTP Request 节点中配置 API Key
+3. 测试图像生成
+
+**验证**: 成功生成测试图像
+
+---
+
+### 步骤 6: 创建第一个网红
+
+**目标**: 在数据库中添加虚拟网红
+
+**操作**:
+
+1. 在 Database 中插入网红记录：
+```sql
+name: "Luna AI"
+bio: "Digital creator exploring art & technology"
+image: [生成的头像 URL]
+instagram_business_id: [你的 Business ID]
+```
+
+2. 添加周计划：
+```sql
+influencer_id: "1"
+week: "Week 1"
+plan: "Tech art abstract, vibrant colors, futuristic"
+```
+
+**验证**: 数据成功插入
+
+---
+
+### 步骤 7: 测试完整流程
+
+**目标**: 端到端验证
+
+**操作**:
+
+1. 手动触发工作流
+2. 观察执行过程
+3. 检查 Instagram 是否成功发布
+4. 验证内容质量
+
+**预期结果**:
+- 图像成功生成
+- 文案自动生成
+- 帖子发布到 Instagram
+- 数据库记录已更新
+
+> 💡 **需要帮助？** 如果遇到问题，查看 [Level 5] 故障排除。
+
+---
+
+## [Level 5] 进阶内容
+
+### 内容策略优化
+
+**高频发布策略**:
+- 每日 1-3 条内容
+- 黄金时间发布（根据受众时区）
+- 混合内容类型（图片、故事、Reels）
+
+**内容类型**:
+| 类型 | 说明 | 提示词示例 |
+|------|------|------------|
+| 生活方式 | 日常场景 | `"daily life, coffee shop, cozy atmosphere"` |
+| 科技探索 | 产品展示 | `"tech gadgets, clean background, professional"` |
+| 艺术创作 | 艺术作品 | `"abstract art, vibrant colors, creative"` |
+
+### 网红人设建议
+
+**科技博主**:
+```
+Name: "TechNova"
+Bio: "Exploring tomorrow's technology today"
+Style: "Futuristic, clean, tech-focused"
+Content: Gadgets, AI, coding
+```
+
+**时尚博主**:
+```
+Name: "StyleMuse AI"
+Bio: "Your AI fashion inspiration"
+Style: "Trendy, colorful, fashion-forward"
+Content: Outfits, trends, style tips
+```
+
+**旅行博主**:
+```
+Name: "Wanderlust AI"
+Bio: "Digital nomad exploring the world"
+Style: "Scenic, adventurous, beautiful"
+Content: Landscapes, cities, culture
+```
+
+### 定时发布策略
+
+| 时段 | 目标受众 | 内容类型 |
+|------|----------|----------|
+| 早上 7-9 点 | 上班族 | 激励、新闻 |
+| 中午 12-1 点 | 午休人群 | 轻松内容 |
+| 晚上 7-9 点 | 放松人群 | 娱乐、生活 |
+| 深夜 10-12 点 | 夜猫子 | 创意、艺术 |
+
+### 故障排除
+
+| 问题 | 症状 | 解决方案 |
+|------|------|----------|
+| Instagram 发布失败 | API 错误 | 检查 Business ID 和权限 |
+| 图像生成失败 | Fal.ai 错误 | 检查 API Key 和配额 |
+| Database 错误 | 无法保存数据 | 检查表结构和字段类型 |
+| 内容质量差 | 生成内容不理想 | 优化提示词和风格设置 |
+
+### 生产部署注意事项
+
+**成本优化**:
+- Fal.ai 按使用付费，设置月度预算
+- 使用缓存减少重复生成
+- 批量处理降低 API 调用次数
+
+**安全建议**:
+- 使用环境变量存储 API Keys
+- 定期备份 n8n Database
+- 监控发布频率避免被限流
+
+**合规性**:
+- 遵守 Instagram 内容政策
+- 标注 AI 生成内容（如需要）
+- 尊重版权和肖像权
+
+### 相关资源
+
+**相关 Episode**:
+- [Episode 8](../episode_8/) - AI influencer on Instagram
+- [Episode 12](../episode_12/) - Postiz 社交媒体调度
+- [Episode 39](../episode_39/) - Nano Banana Pro 信息图表
+
+**外部资源**:
+- [Instagram Graph API 文档](https://developers.facebook.com/docs/instagram-api)
+- [Fal.ai 文档](https://docs.fal.ai/)
+- [Postiz](https://postiz.com) - 社交媒体管理工具
+
+---
+
+## 资源下载
+
+### n8n 工作流文件
+
+- [workflow-influencer-machine.json](./workflow-influencer-machine.json) - 主工作流
+- [subworkflow-fal-veo31.json](./subworkflow-fal-veo31.json) - Fal.ai 子工作流
+- [subworkflow-fal-nanobanana.json](./subworkflow-fal-nanobanana.json) - NanoBanana 子工作流
+
+### 指南文档
+
+- [guide-instagram.md](./guide-instagram.md) - Instagram 连接指南
+
+---
+
+## 观看视频
+
+[![Make your own AI influencers with this free n8n workflow
+](https://img.youtube.com/vi/PjXYr6M4fjY/0.jpg)](https://www.youtube.com/watch?v=PjXYr6M4fjY)
+
+**时长**: ~20 分钟 | **更新日期**: 2025-01-16
+
+---
+
+## 社区支持
+
+- [Skool 社区](https://www.skool.com/ai-agents-az/about?gw11) - 获取 Premium 版本工作流
+
+---
+
+## 导航
+
+| 你的需求 | 建议阅读 |
+|----------|----------|
+| 快速了解本集内容 | Level 1 |
+| 决定是否学习本集 | Level 1-2 |
+| 理解工作流原理 | Level 3 |
+| 跟随教程构建 | Level 4 |
+| 排查问题/生产部署 | Level 5 |
+
+---
+
+**Episode**: 35 | **版本**: v2.0 (分层解释版) | **最后更新**: 2025-01-16
+
+**标签**: n8n, Instagram, AI influencer, Fal.ai, automation, social media

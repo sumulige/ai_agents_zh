@@ -1,67 +1,437 @@
-# Episode 7: Creating Youtube short videos using our custom MCP server
+# Episode 7: YouTube Short Videos Using Custom MCP Server
 
-## [📚 Join our Skool community for support, premium content and more!](https://www.skool.com/ai-agents-az/about?gw7)
+> AI Agents A-Z - 用 n8n 构建实用的 AI Agent
+> 难度: ⭐⭐⭐ | 预估时间: 50 分钟
 
-### Be part of a growing community and help us create more content like this
+---
 
-<table>
-  <tr>
-    <td style="vertical-align: top;">
-      <h2>Get the free n8n JSON templates</h2>
-      <ul>
-        <li><a href="youtube_shorts_with_mcp_server.json">Create youtube shorts using MCP + n8n</a></li>
-        <li><a href="short-video-maker-rest-api.json">Using Ollama + REST API to generate the video (100% free)</a></li>
-      </ul>
-    </td>
-    <td>
-      <h2>Watch the video</h2>
-      <a href="https://www.youtube.com/watch?v=jzsQpn-AciM">
-        <img src="https://img.youtube.com/vi/jzsQpn-AciM/0.jpg" alt="Automated faceless video generation (n8n + MCP) with captions, background music local and 100% free" />
-      </a>
-    </td>
-  </tr>
-</table>
+## [Level 1] 这一集在做什么？
 
-## MCP server
+本集教你用 n8n 和**自定义 MCP 服务器**自动生成 YouTube Shorts 视频。
 
-### How to run the server using Docker (recommended)
+**一句话**：像"视频工厂"一样，从 Reddit 笑话自动生成带有字幕和背景音乐的短视频。
 
-#### Tiny (recommended)
+**适用场景**：
+- 自动化短视频内容创作
+- YouTube Shorts/TikTok 批量制作
+- 面视频道内容生成
 
-```jsx
-docker run -it --rm --name short-video-maker -p 3123:3123 -e LOG_LEVEL=debug -e PEXELS_API_KEY= gyoridavid/short-video-maker:latest-tiny
+> 💡 **快速判断**：如果你需要**100% 免费自动化视频生成**，这一集适合你。
+> 想了解更多？继续阅读 [Level 2]。
+
+---
+
+## [Level 2] 核心概念
+
+### 你会学到什么
+
+| 序号 | 概念 | 说明 |
+|------|------|------|
+| 1 | **MCP (Model Context Protocol)** | n8n 与外部服务通信的标准 |
+| 2 | **Docker 容器** | 运行独立的视频生成服务 |
+| 3 | **自定义 MCP 服务器** | 创建自己的 MCP 工具 |
+| 4 | **AI Agent 集成** | 使用 Agent 调用 MCP 工具 |
+| 5 | **视频生成流水线** | 脚本 → 语音 → 字幕 → 视频 |
+
+### 涉及的 n8n 节点
+
+| 节点类型 | 用途 | 新手友好度 |
+|----------|------|------------|
+| Manual Trigger | 手动启动 | ⭐ 简单 |
+| AI Agent | 智能决策和工具调用 | ⭐⭐⭐ 高级 |
+| MCP Client Tool | 连接 MCP 服务器 | ⭐⭐⭐ 高级 |
+| HTTP Request | API 调用 | ⭐⭐ 中等 |
+| Wait | 轮询等待 | ⭐⭐ 中等 |
+| If | 条件判断 | ⭐⭐ 中等 |
+| YouTube | 上传视频 | ⭐⭐ 中等 |
+
+### 涉及的外部服务
+
+| 服务 | 免费额度 | 难度 | 官网 |
+|------|----------|------|------|
+| **MCP Server** | 自托管 | ⭐⭐⭐ | [github.com/gyoridavid](https://github.com/gyoridavid/short-video-maker) |
+| **OpenAI** | 按使用付费 | ⭐ | [openai.com](https://openai.com/) |
+| **Pexels** | 免费（需 Key） | ⭐ | [pexels.com](https://www.pexels.com/) |
+| **YouTube** | 免费 | ⭐⭐ | [youtube.com](https://youtube.com/) |
+
+### 工作流文件
+
+本集包含 2 个工作流文件：
+- `youtube_shorts_with_mcp_server.json` - 使用 MCP 服务器
+- `short-video-maker-rest-api.json` - 使用 REST API（100% 免费）
+
+> 💡 **了解够了？** 知道学什么就可以开始。继续阅读 [Level 3] 了解工作流结构。
+
+---
+
+## [Level 3] 工作流结构
+
+### 工作流概览图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              "YouTube Shorts Generator" 工作流                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [Manual Trigger]                                           │
+│  获取 r/Jokes 数据                                           │
+│       │                                                     │
+│       ▼                                                     │
+│  [Select Joke] ──► 选择一个笑话                              │
+│       │                                                     │
+│       ▼                                                     │
+│  [AI Agent with MCP Tool]                                   │
+│  将笑话转换为视频脚本                                        │
+│  调用 MCP create-short-video 工具                            │
+│       │                                                     │
+│       ▼                                                     │
+│  [返回 videoId 和 videoTitle]                               │
+│       │                                                     │
+│       ▼                                                     │
+│  [Check Video Status] ──► 轮询检查状态                       │
+│  HTTP: GET /api/short-video/{id}/status                     │
+│       │                                                     │
+│       ▼                                                     │
+│  [If: status == "ready"]                                    │
+│       │                                                     │
+│       ├───► [Download Video]                                │
+│       │     HTTP: GET /api/short-video/{id}                 │
+│       │                                                     │
+│       └───► [Upload to YouTube]                             │
+│             发布到 YouTube Shorts                           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-#### Normal (slower)
+### MCP 服务器架构
 
-```jsx
-docker run -it --rm --name short-video-maker -p 3123:3123 -e LOG_LEVEL=debug -e PEXELS_API_KEY= gyoridavid/short-video-maker:latest
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  MCP 服务器架构                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  n8n ──► MCP Client ──► short-video-maker 服务器           │
+│                              │                              │
+│                              ├──► Pexels (背景视频)          │
+│                              │                              │
+│                              ├──► TTS Engine (语音)         │
+│                              │                              │
+│                              ├──► 字幕生成                  │
+│                              │                              │
+│                              └──► 视频合成 (FFmpeg)          │
+│                                                             │
+│  输出: MP4 视频文件 + 元数据                                  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-#### Cuda support for whisper.cpp
+### 数据流
 
-```jsx
-docker run -it --rm --name short-video-maker -p 3123:3123 -e LOG_LEVEL=debug -e PEXELS_API_KEY= --gpus=all gyoridavid/short-video-maker:latest-cuda
+```
+Reddit 笑话
+    │
+    ├──► AI Agent 转换为视频脚本
+    │     └─── 提取关键情节
+    │
+    ├──► MCP 服务器生成视频
+    │     ├─── 背景视频 (Pexels)
+    │     ├─── 语音合成 (TTS)
+    │     ├─── 字幕生成
+    │     └─── 视频合成
+    │
+    ├──► 轮询检查状态
+    │     └─── processing → ready
+    │
+    └─── 上传到 YouTube
 ```
 
-### Resources
+### 节点说明
 
-- [Find more info in the Github repo](https://github.com/gyoridavid/short-video-maker)
-- [npm package](https://www.npmjs.com/package/short-video-maker)
-- [Docker](https://hub.docker.com/r/gyoridavid/short-video-maker)
+| 节点 | 类型 | 配置要点 | 数据输出 |
+|------|------|----------|----------|
+| **When clicking Test** | Manual Trigger | 手动执行 | 触发信号 |
+| **Select Joke** | Set | 选择特定笑话 | 笑话内容 |
+| **Generate video** | AI Agent | 使用 MCP 工具 | `{videoId, videoTitle}` |
+| **MCP Client** | MCP Client Tool | SSE: `http://host.docker.internal:3123/mcp/sse` | 工具调用 |
+| **Check video status** | HTTP Request | 轮询状态 | `{status: "ready"}` |
+| **If** | If | 判断状态 | 条件分支 |
+| **Download video** | HTTP Request | 下载视频 | 视频文件 |
+| **Share on YouTube** | YouTube | 上传 Shorts | 视频 URL |
 
-## Example videos generated by the MCP server
+> 💡 **准备就绪？** 理解工作流结构后，继续阅读 [Level 4] 开始构建。
 
-<table>
-  <tr>
-    <td>
-      <video src="https://github.com/user-attachments/assets/c4ec945b-dbfd-44b0-b8a4-67c93bc576cd" width="270" height="480"></video>
-    </td>
-    <td>
-      <video src="https://github.com/user-attachments/assets/87a7678b-2a1c-4894-815d-3170a77cf5d4" width="270" height="480"></video>
-    </td>
-    <td>
-      <video src="https://github.com/user-attachments/assets/4d20538a-f8bc-49dc-a41d-b5c4e265d161" width="270" height="480"></video>
-    </td>
-  </tr>
-</table>
+---
+
+## [Level 4] 构建步骤
+
+### 前置准备
+
+在开始之前，请确保：
+
+- [ ] n8n 已安装并运行（Docker 版本）
+- [ ] Docker 已安装并运行
+- [ ] OpenAI API Key 已配置
+- [ ] Pexels API Key 已获取
+- [ ] YouTube OAuth 已连接
+
+### 步骤 1: 启动 MCP 服务器
+
+**目标**: 运行 short-video-maker Docker 容器
+
+**操作**:
+
+1. 拉取 Docker 镜像：
+```bash
+docker pull gyoridavid/short-video-maker:latest-tiny
+```
+
+2. 运行容器：
+```bash
+docker run -it --rm --name short-video-maker \
+  -p 3123:3123 \
+  -e LOG_LEVEL=debug \
+  -e PEXELS_API_KEY=your_key_here \
+  gyoridavid/short-video-maker:latest-tiny
+```
+
+**验证**: 服务器在 `http://localhost:3123` 运行
+
+**可用版本**:
+- `latest-tiny` - 推荐（更快）
+- `latest` - 正常速度
+- `latest-cuda` - GPU 加速
+
+---
+
+### 步骤 2: 导入工作流
+
+**目标**: 导入 YouTube Shorts 工作流
+
+**操作**:
+
+1. 在 n8n 中点击 **"..."** 菜单
+2. 选择 **"Import from File"**
+3. 选择 `youtube_shorts_with_mcp_server.json`
+
+**验证**: 工作流显示在画布上
+
+---
+
+### 步骤 3: 配置 MCP Client
+
+**目标**: 连接到 MCP 服务器
+
+**操作**:
+
+1. 点击 **"MCP Client"** 节点
+2. 配置 SSE 端点：
+   - `http://host.docker.internal:3123/mcp/sse`
+3. 选择工具：`create-short-video`
+
+**验证**: MCP 节点显示已连接
+
+---
+
+### 步骤 4: 配置 OpenAI 模型
+
+**目标**: 连接 LLM
+
+**操作**:
+
+1. 点击 **"OpenAI Chat Model"** 节点
+2. 选择 `gpt-4o-mini`（更快更便宜）
+3. 验证凭证
+
+**验证**: 模型已连接
+
+---
+
+### 步骤 5: 配置 YouTube
+
+**目标**: 连接 YouTube 频道
+
+**操作**:
+
+1. 点击 **"Share on YouTube"** 节点
+2. 配置 OAuth 凭证
+3. 设置默认值：
+   - 地区代码
+   - 类别（娱乐）
+   - 可见性
+
+**验证**: YouTube 已连接
+
+---
+
+### 步骤 6: 测试完整流程
+
+**目标**: 生成第一个短视频
+
+**操作**:
+
+1. 手动执行工作流
+2. 等待 AI Agent 处理笑话
+3. 等待视频生成（可能需要 1-2 分钟）
+4. 检查 YouTube 上传
+
+**预期结果**:
+- 视频成功生成
+- 包含字幕和背景
+- 已上传到 YouTube
+
+> 💡 **需要帮助？** 如果遇到问题，查看 [Level 5] 故障排除。
+
+---
+
+## [Level 5] 进阶内容
+
+### 100% 免费方案
+
+**使用 Ollama + REST API**:
+
+工作流文件：`short-video-maker-rest-api.json`
+
+1. 安装 Ollama
+2. 运行本地模型
+3. 无需 OpenAI API
+
+### 自定义视频样式
+
+**修改 MCP 服务器参数**:
+```javascript
+{
+  "voice": "af_heart",      // TTS 声音
+  "font": "Arial",          // 字体
+  "font_size": 24,          // 字号
+  "position": "bottom"      // 字幕位置
+}
+```
+
+### 支持的 TTS 声音
+
+| 语音 | 性别 | 风格 |
+|------|------|------|
+| `af_heart` | 女 | 温暖友好 |
+| `af_bella` | 女 | 清晰专业 |
+| `am_michael` | 男 | 平稳叙述 |
+| `bf_emma` | 女 | 活泼热情 |
+
+### 内容源扩展
+
+**其他 Reddit 子版块**:
+```
+r/Jokes → 笑话
+r/AskReddit → 问答
+r/todayilearned → 冷知识
+r/funfacts → 有趣事实
+```
+
+### 批量生成
+
+**创建自动化流水线**:
+```
+[Schedule Trigger] ──► [获取内容] ──► [生成视频]
+        │                                │
+        └──► 每天 10 个 ──────────────────┘
+```
+
+### 故障排除
+
+| 问题 | 症状 | 可能原因 | 解决方案 |
+|------|------|----------|----------|
+| MCP 连接失败 | 无法连接服务器 | Docker 容器未运行 | 检查容器状态 |
+| 视频生成超时 | status 永远 processing | 视频太复杂 | 简化脚本 |
+| YouTube 上传失败 | 错误响应 | 视频格式问题 | 检查视频规格 |
+| TTS 发音错误 | 语音不自然 | 文本格式问题 | 清理标点符号 |
+
+### Docker 进阶配置
+
+**GPU 加速**（如果有 NVIDIA GPU）:
+```bash
+docker run --gpus=all ...
+```
+
+**自定义端口**:
+```bash
+-p 8080:3123  # 使用 8080 端口
+```
+
+### 生产部署注意事项
+
+**服务器要求**:
+- CPU: 4 核心以上
+- RAM: 8GB 以上
+- 存储: 20GB 以上
+
+**成本优化**:
+- 使用本地 TTS（替代 API）
+- 缓存背景视频
+- 批量处理降低开销
+
+**内容质量**:
+- 建立内容审核流程
+- A/B 测试不同风格
+- 监控视频表现
+
+### 相关资源
+
+**相关 Episode**:
+- [Episode 9](../episode_9/) - 复仇故事视频
+- [Episode 11](../episode_11/) - 励志短视频
+- [Episode 40](../episode_40/) - Flux.2 图像生成
+
+**外部资源**:
+- [short-video-maker GitHub](https://github.com/gyoridavid/short-video-maker)
+- [MCP 规范](https://modelcontextprotocol.io/)
+- [n8n MCP 文档](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-langchain.mcpclienttool/)
+
+---
+
+## 资源下载
+
+### n8n 工作流文件
+
+- [youtube_shorts_with_mcp_server.json](./youtube_shorts_with_mcp_server.json)
+- [short-video-maker-rest-api.json](./short-video-maker-rest-api.json)
+
+### MCP 服务器
+
+**Docker Hub**: [gyoridavid/short-video-maker](https://hub.docker.com/r/gyoridavid/short-video-maker)
+
+---
+
+## 观看视频
+
+[![Automated faceless video generation with n8n + MCP](https://img.youtube.com/vi/jzsQpn-AciM/0.jpg)](https://www.youtube.com/watch?v=jzsQpn-AciM)
+
+**时长**: ~25 分钟 | **更新日期**: 2025-01-17
+
+---
+
+## 示例视频
+
+![示例视频](https://github.com/user-attachments/assets/c4ec945b-dbfd-44b0-b8a4-67c93bc576cd)
+
+---
+
+## 社区支持
+
+- [Skool 社区](https://www.skool.com/ai-agents-az/about?gw7)
+
+---
+
+## 导航
+
+| 你的需求 | 建议阅读 |
+|----------|----------|
+| 快速了解本集内容 | Level 1 |
+| 决定是否学习本集 | Level 1-2 |
+| 理解工作流原理 | Level 3 |
+| 跟随教程构建 | Level 4 |
+| 排查问题/生产部署 | Level 5 |
+
+---
+
+**Episode**: 7 | **版本**: v2.0 (分层解释版) | **最后更新**: 2025-01-17
+
+**标签**: n8n, MCP, YouTube Shorts, video generation, Docker, automation, faceless
