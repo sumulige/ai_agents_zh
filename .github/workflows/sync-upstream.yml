@@ -20,7 +20,7 @@ jobs:
 
       - name: Add Upstream Remote
         run: |
-          git remote add upstream https://github.com/gyoridavid/ai-agents-az.git
+          git remote add upstream https://github.com/gyoridavid/ai_agents_az.git
 
       - name: Fetch from Upstream
         run: git fetch upstream
